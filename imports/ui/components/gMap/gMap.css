@@ -1,0 +1,24 @@
+
+/*-------------------------------*/
+/*          map                  */
+/*-------------------------------*/
+.leaflet-control-container .leaflet-routing-container-hide {
+    display: none;
+}
+
+
+#mapid{ 
+    z-index: 0;
+    position: absolute;
+    top : 0;
+    left: 0;
+    height: 100%; 
+    width: 100%;
+    }
+
+#logOut{
+    position: absolute;
+    top :5px;
+    left: 5px;
+    z-index: 50;
+}
