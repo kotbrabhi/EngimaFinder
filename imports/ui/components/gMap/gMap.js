@@ -13,8 +13,8 @@ import { Session } from 'meteor/session';
 import { Meteor } from 'meteor/meteor';
 import { Tracker } from 'meteor/tracker'
 import { Teams } from '../../../api/teams';
+import { Missions } from '../../../api/missions';
 
-import mobileTemplate from './mobile.html';
 import webTemplate from './web.html';
 import './gMap.css';
 
@@ -28,8 +28,20 @@ class GMap {
         $reactive(this).attach($scope);
 
         var vm = this;
+        Number.prototype.toRad = function() { return this * (Math.PI / 180); };
+        var distance = function(lat1,lon1,lat2,lon2){
+            var R = 6371; // km
+            var dLat = (lat2-lat1).toRad();
+            var dLon = (lon2-lon1).toRad();
+            var lat1 = lat1.toRad();
+            var lat2 = lat2.toRad();
 
-
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            var d = R * c;
+            return d*1000;
+        }
         var homeIcon = L.AwesomeMarkers.icon({
             icon: 'fa-street-view',
             markerColor: 'red',
@@ -57,12 +69,16 @@ class GMap {
             }
         })
 
+        var lastPos = {latitude: 34.6813900, longitude: -1.9085800};
         vm.helpers({
             current() {
-                let pos = Location.getReactivePosition() || Location.getLastPosition() || { latitude: 0, longitude: 0 };
+                let pos = Location.getReactivePosition() || Location.getLastPosition() || { latitude: 34.6813900, longitude: -1.9085800 };
                 vm.currentMarker.setLatLng([pos.latitude, pos.longitude]);
                 vm.currentMarker.update();
-                Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos } })
+                if(distance(pos.latitude,pos.longitude,lastPos.latitude,lastPos.longitude)>20){
+                     Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos } })
+                     lastPos = pos;
+                }
                 return pos;
             }
         });
@@ -95,7 +111,10 @@ class GMap {
         L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWVzc2FvdWRpb3Vzc2FtYSIsImEiOiJjaXQ2MjBqdHQwMDFsMnhxYW9hOW9tcHZoIn0.uX-ZR_To6tzxUpXmaVKOnQ', {
         }).addTo(map);
 
+
         Meteor.subscribe('teams');
+        Meteor.subscribe('missions');
+
 
         vm.helpers({
             teams() {
@@ -103,15 +122,17 @@ class GMap {
                 let count = 0;
                 let teamHandler = query.observeChanges({
                     added: function (id, team) {
-                        var popup = L.popup({ closeOnClick: false }).setContent(team.nom + " " + team.prenom);
+                        count++;
+                        var popup = L.popup({ closeOnClick: false }).setContent(team.teamName);
                         vm.markers[id] = L.marker([team.position.latitude, team.position.longitude], { icon: defaultIcon, zIndexOffset: 90 });
                         vm.markers[id].bindPopup(popup).openPopup();
                         vm.markers[id].addTo(map);
-
                     },
                     changed: function (id, team) {
-                        vm.markers[id].setLatLng([team.position.latitude, team.position.longitude]);
-                        vm.markers[id].update();
+                        if(team.position){
+                            vm.markers[id].setLatLng([team.position.latitude, team.position.longitude]);
+                            vm.markers[id].update();
+                        }
                     },
                     removed: function (id) {
                         count--;
@@ -121,6 +142,154 @@ class GMap {
                 return query;
             }
         });
+
+        vm.helpers({
+            missions() {
+                let query = Missions.find({});
+                let count = 0;
+                let missionHandler = query.observeChanges({
+                    added: function (id, mission) {
+                        count++;
+                    },
+                    changed: function (id, team) {
+                        
+                    },
+                    removed: function (id) {
+                        count--;
+                    }
+                })
+                return query;
+            }
+        });
+
+        vm.missionList = {
+            _show : false,
+            showAdd : false,
+            mission : {},
+            updateMission : 0,
+            add : function(mission){
+                Missions.insert(mission,function(err,id){
+                    if(!err){
+                         vm.teams.forEach(function(team){
+                             if(team.teamName != "Enigma"){
+                                    let missions = team.missions;
+                                    missions[id] = {
+                                            intitulee : mission.intitulee,
+                                            description : mission.description,
+                                            done : false,
+                                            note : 0,
+                                            commentaire : "",
+                                    }
+                                    Teams.update({_id : team._id},{$set : {missions : missions}})
+                             }
+                        })
+                    }
+                });
+               vm.missionList.showAdd = false;
+            },
+            delete : function(mission){
+                let r = window.confirm('confirm !');
+                if(r){
+                    Missions.remove({_id : mission._id});
+                    vm.teams.forEach(function(team){
+                                if(team.teamName != "Enigma"){
+                                        let missions = team.missions;
+                                        missions[mission._id] = undefined;
+                                        Teams.update({_id : team._id},{$set : {missions : missions}})
+                                }
+                    })
+               }
+            },
+            showUpdate : function(id,mission){
+
+                    vm.missionList.mission = {
+                        intitulee : mission.intitulee,
+                        description : mission.description,
+                        done : mission.done,
+                        note : mission.note,
+                        commentaire : mission.commentaire
+                    };
+                    vm.missionList.updateMission = id
+            },
+            update : function(id,mission){
+               let missions = vm.teams[0].missions;
+               missions[id] = mission||vm.missionList.mission;
+               Teams.update({_id : vm.teams[0]._id},{$set : {missions : missions}})
+               vm.missionList.updateMission=0;
+               vm.missionList.mission = {};
+            }
+        }
+
+        vm.teamList = {
+            _show : false,
+            delete : function(team){
+                let r = window.confirm('confirm !');
+                if(r){
+                    Teams.remove({_id : team._id});
+                    Meteor.call('_deleteUser',team._id)
+                }
+            }
+        }
+
+        vm.singUp = {
+            _show : false,
+            teamName: '',
+            password: '',
+            teamNameTaken : false,
+
+            createUser : function () {
+            let pos = Location.getReactivePosition() || Location.getLastPosition() || { latitude: 34.6813900, longitude: -1.9085800 };
+             let missions = {};
+                    vm.missions.forEach(function(mission){
+                        missions[mission._id] = {
+                            intitulee : mission.intitulee,
+                            description : mission.description,
+                            done : false,
+                            note : 0,
+                            commentaire : "",
+                        }
+             })
+            Teams.insert({ teamName: vm.singUp.teamName, position: pos ,missions : missions}, function (err, id) {
+                if (err) {
+                    vm.singUp.teamNameTaken = true;
+                    $timeout(function () {
+                        vm.singUp.teamNameTaken = false;
+                    }, 4000)
+                } else {
+                    let user = {
+                        email: vm.singUp.teamName+"@enigma.com",
+                        password: vm.singUp.password,
+                        profile: {
+                            teamName : vm.singUp.teamName,
+                            markerId: id,
+                            mask : "001"
+                        }
+                    }
+                    Meteor.call('_createUser',user,function(err,data){
+                        if(err){
+                                $scope.$apply(function(){
+                                    vm.singUp.teamNameTaken = true;
+                                })
+                                $timeout(function () {
+                                    vm.singUp.teamNameTaken = false;
+                                }, 4000)
+                        }else{
+                            $scope.$apply(function(){
+                                vm.singUp._show = false;
+                            })
+                        }
+                    })
+                }
+            })
+        },
+
+        hide : function(){
+             vm.singUp._show = false;
+              vm.singUp.teamName = "";
+               vm.singUp.password = ""
+        }
+        }
+
         vm.logOut = function () {
             Meteor.logout(function (error) {
                 if (error)
@@ -131,7 +300,7 @@ class GMap {
 }
 
 const name = 'gMap';
-const template = Meteor.isCordova ? mobileTemplate : webTemplate;
+const template = webTemplate;
 
 // create a module
 export default angular.module(name, [

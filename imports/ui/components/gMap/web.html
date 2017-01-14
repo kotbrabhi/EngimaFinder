@@ -1,3 +1,222 @@
-<button id="logOut" ng-click="gMap.logOut()">Log Out</button>
+<button type="button" class="btn btn-xs btn-danger"  ng-click="gMap.logOut()">Log Out</button>
+<button type="button" class="btn btn-xs btn-default" ng-click="gMap.singUp._show = true" ng-if="gMap.user.profile.mask=='010'">Add team</button>
+<button type="button" class="btn btn-xs btn-info" ng-click="gMap.teamList._show = true" ng-if="gMap.user.profile.mask=='010'">teams</button>
+<button type="button" class="btn btn-xs btn-warning" ng-click="gMap.missionList._show = true">Missions</button>
+
+
+<div id="addTeamContainer" ng-if="gMap.user.profile.mask=='010'&&gMap.singUp._show">
+    <div id="signupbox"  class="mainbox col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="panel-title">Create Team</div>
+        </div>
+        <div style="padding-top:30px" class="panel-body">
+            <form name="signupform" novalidate>
+
+                <div class="form-group" ng-class="{ 'has-error': signupform.teamName.$touched && (signupform.teamName.$invalid||gMap.singUp.teamNameTaken) }">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+                        <input type="text" class="form-control" name="teamName" placeholder="teamName" ng-model='gMap.singUp.teamName' required>
+                    </div>
+                    <div class="help-block" ng-messages="signupform.teamName.$error" ng-if="signupform.teamName.$touched">
+                        <p ng-if="signupform.teamName.$error.teamName">teamName invalid</p>
+                        <p ng-if="signupform.teamName.$error.required">teamName obligatoire.</p>
+                        <p ng-if="gMap.singUp.teamNameTaken">teamName deja utiliser.</p>
+                    </div>
+                </div>
+
+                <div class="form-group" ng-class="{ 'has-error': signupform.password.$touched && signupform.password.$invalid}">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+                        <input type="password" class="form-control" name="password" placeholder="password" ng-model="gMap.singUp.password" minlength="4"
+                        required>
+                    </div>
+                    <div class="help-block" ng-messages="signupform.password.$error" ng-if="signupform.password.$touched">
+                        <p ng-if="signupform.password.$error.required">Mot de passe obligatoire.</p>
+                        <p ng-if="signupform.password.$error.minlength">mot de passe trop court.</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <!-- Button -->
+                    <div class="col-md-offset-3 col-md-9">
+                        <button id="btn-signup" type="button" class="btn" ng-class="{disabled : signupform.$invalid,'btn-info' : signupform.$valid,'btn-danger' : signupform.$invalid}"
+                        ng-click="gMap.singUp.createUser()">Create</button>
+                        <button  type="button" class="btn btn-default"  ng-click="gMap.singUp.hide()">Cancel</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+</div>
 <div id="mapid">
+</div>
+<div >
+
+</div>
+
+<div id="teamListContianer" ng-if="gMap.user.profile.mask=='010'&&gMap.teamList._show">
+    <div class="panel panel-default">
+
+        <div class="panel-heading clearfix">
+            <button type="button" ng-click="gMap.teamList._show = false" class="btn  btn-default pull-left">
+                <i class="fa fa-chevron-circle-left fa-lg" aria-hidden="true"></i>
+            </button>
+
+            <div class="input-group col-xs-8 pull-right">
+                <input type="text" class="form-control" placeholder="Recherche..." ng-model="gMap.teamList.search">
+            </div>
+
+        </div>
+
+        <div class="panel-body">
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="team in gMap.teams |  filter : gMap.teamList.search | orderBy : '-nbrMissionDone'">
+                    <div class="panel panel-default" ng-if="team.teamName!='Enigma'">
+                        <div class="panel-heading clearfix">
+                            <div>
+                                {{team.teamName}}
+                                <br>
+                                Total Score : {{team.totalNote}}
+                                <br>
+                                Nobre Mission accomplie : {{team.nbrMissionDone}}
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="panel panel-default" ng-repeat="mission in team.missions">
+                                <div class="panel-heading clearfix">
+                                    {{mission.intitulee}}
+                                </div>
+                                <div class="panel-body">
+                                    done : {{mission.done}}
+                                    <br>
+                                    note : {{mission.note}}
+                                    <br>
+                                    commentaire : {{mission.commentaire}}
+                                </div>
+                            </div>
+                        </div>  
+                        <div class="panel-footer clearfix">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button id="btn-signup" type="button" class="btn btn-danger pull-right" ng-click="gMap.teamList.delete(team)">delete</button>
+                            </div> 
+                        </div>
+                    </div>
+                    
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="missionContainer" ng-if="gMap.missionList._show">
+    <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+            <button type="button" ng-click="gMap.missionList._show = false" class="btn  btn-default pull-left">
+                <i class="fa fa-chevron-circle-left fa-lg" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        <div class="panel-body" ng-if="gMap.user.profile.mask=='010'">
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="mission in gMap.missions">
+                     <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div>
+                                {{mission.intitulee}}
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            {{mission.description}}
+                         </div>
+                         <div class="panel-footer clearfix">
+                             <div class="col-md-offset-3 col-md-9">
+                                <button id="btn-signup" type="button" class="btn btn-danger pull-right" ng-click="gMap.missionList.delete(mission)">delete</button>
+                            </div>  
+                    </div>
+                </li>
+                <button type="button" class="btn" ng-click="gMap.missionList.showAdd = !gMap.missionList.showAdd"><i class="glyphicon glyphicon-plus"></i></button>
+                <hr>
+                <li class="list-group-item clearfix" ng-if="gMap.missionList.showAdd" ng-init="newMission = {}">
+                     <form name="missionForm" novalidate>
+                        <div class="form-group" ng-class="{ 'has-error': missionForm.missionName.$touched && (missionForm.missionName.$invalid||gMap.singUp.missionNameTaken) }">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+                                <input type="text" class="form-control" name="missionName" placeholder="Intitulée" ng-model='newMission.intitulee' required>
+                            </div>
+                            <div class="help-block" ng-messages="missionForm.missionName.$error" ng-if="missionForm.missionName.$touched">
+                                <p ng-if="missionForm.missionName.$error.required">Intitulée obligatoire.</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+                                <textarea  class="form-control" name="missionDesc" placeholder="Description" ng-model='newMission.description'>
+                            </div>
+                        </div>
+                         <div class="form-group">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="button" class="btn" ng-class="{disabled : missionForm.$invalid,'btn-info' : missionForm.$valid,'btn-danger' : signupform.$invalid}"
+                                ng-click="gMap.missionList.add(newMission);newMission = {};">Add</button>
+                            </div>
+                        </div>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <div class="panel-body" ng-if="gMap.user.profile.mask=='001'">
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="(id,mission) in gMap.teams[0].missions">
+                     <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div>
+                                {{mission.intitulee}}
+                            </div>
+                            <div>
+                                <h6>{{mission.description}}</h6>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                   Done :
+                                    <div class="btn-group">
+                                        <button type="button" class="btn" ng-class="{'btn-success' : mission.done==true}" ng-click="mission.done = true;gMap.missionList.update(id,mission)">Oui</button>
+                                        <button type="button" class="btn" ng-class="{'btn-danger' : mission.done==false}" ng-click="mission.done = false;gMap.missionList.update(id,mission)">Non</button>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div ng-if="gMap.missionList.updateMission!=id" ng-click="gMap.missionList.showUpdate(id,mission)">
+                                        Note : <a>{{mission.note}}</a>
+                                    </div>
+                                    <div ng-if="gMap.missionList.updateMission==id">
+                                         Note : <br>
+                                         <input type="number" ng-model="gMap.missionList.mission.note"> 
+                                         <br><br>
+                                    </div>
+                                    <div ng-if="gMap.missionList.updateMission!=id" ng-click="gMap.missionList.showUpdate(id,mission)">
+                                        Commentaire : <p>{{mission.commentaire}}</p>
+                                    </div>
+                                    <div ng-if="gMap.missionList.updateMission==id">
+                                         Commentaire : <br>
+                                         <textarea type="text" ng-model="gMap.missionList.mission.commentaire"> 
+                                    </div>
+                                    <br>
+                                     <div class="btn-group" ng-if="gMap.missionList.updateMission==id">
+                                                <button type="button" class="btn btn-success" ng-click="gMap.missionList.update(id)"><i class="glyphicon glyphicon-ok"></i></button>
+                                                <button type="button" class="btn btn-info"    ng-click="gMap.missionList.updateMission = 0"><i class="glyphicon glyphicon-remove"></i></button>
+                                     </div>
+                                </li>
+                            </ul>
+                        </div>
+                     </div>
+                </li>
+            </ul>
+        </div>
+    </div>
 </div>

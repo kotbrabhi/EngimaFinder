@@ -8,7 +8,6 @@ import { Meteor } from 'meteor/meteor';
 import { Teams } from '../../../api/teams';
 
 
-import mobileTemplate from './mobile.html';
 import webTemplate from './web.html';
 import './login.css';
 
@@ -29,17 +28,8 @@ class Settings {
         vm.emailNotFound = false;
         vm.passwordNotFound = false;
 
-        vm.emailTaken = false;
-
         vm.singIn = {
             userName: '',
-            password: ''
-        }
-
-        vm.singUp = {
-            userName: '',
-            firstName: '',
-            lastName: '',
             password: ''
         }
 
@@ -62,46 +52,13 @@ class Settings {
             })
         }
 
-        vm.createUser = function () {
-            let pos = Location.getReactivePosition() || Location.getLastPosition() || { latitude: 0, longitude: 0 };
-
-            Teams.insert({ nom: vm.singUp.firstName, prenom: vm.singUp.lastName, position: pos }, function (err, id) {
-                if (err) {
-                    vm.emailTaken = true;
-                    $timeout(function () {
-                        vm.emailTaken = false;
-                    }, 4000)
-                } else {
-                    Accounts.createUser({
-                        email: vm.singUp.userName,
-                        password: vm.singUp.password,
-                        profile: {
-                            firstName: vm.singUp.firstName,
-                            lastName: vm.singUp.lastName,
-                            markerId: id
-                        }
-                    }, function (err) {
-                        if (err) {
-                            if (err.reason == "Email already exists.") {
-                                vm.emailTaken = true;
-                                $timeout(function () {
-                                    vm.emailTaken = false;
-                                }, 4000)
-                            }
-                        }
-                    });
-                }
-            })
-
-
-        }
     }
 
 }
 
 
 const name = 'login';
-const template = Meteor.isCordova ? mobileTemplate : webTemplate;
+const template = webTemplate;
 // create a module
 export default angular.module(name, [
     angularMeteor,

@@ -9,9 +9,6 @@ import { name as Gmap } from '../gMap/gMap';
 import { name as Login } from '../login/login';
 
 import webTemplate from './web.html';
-import mobileTemplate from './mobile.html';
-
-
 
 class MainApp {
     constructor($scope, $reactive, $state) {
@@ -51,7 +48,7 @@ class MainApp {
 }
 
 const name = 'mainApp';
-const template = Meteor.isCordova ? mobileTemplate : webTemplate;
+const template = webTemplate;
 
 //create a module
 export default angular.module(name, [
