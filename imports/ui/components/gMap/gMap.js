@@ -77,7 +77,7 @@ class GMap {
                 vm.currentMarker.update();
                 let d = distance(pos.latitude,pos.longitude,lastPos.latitude,lastPos.longitude);
                 if(d>10){
-                     Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos},$inc : {distance : d}})
+                     Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos},$inc : {distance : d},$push : {history : {latitude : pos.latitude,longitude : pos.longitude}}})
                      map.panTo(new L.LatLng(pos.latitude, pos.longitude));
                      lastPos = pos;
                 }
@@ -117,7 +117,8 @@ class GMap {
         Meteor.subscribe('teams');
         Meteor.subscribe('missions');
 
-
+        var teamsLayer = L.layerGroup();
+        teamsLayer.addTo(map);
         vm.helpers({
             teams() {
                 let query = Teams.find({});
@@ -128,7 +129,7 @@ class GMap {
                         var popup = L.popup({ closeOnClick: false }).setContent(team.teamName);
                         vm.markers[id] = L.marker([team.position.latitude, team.position.longitude], { icon: defaultIcon, zIndexOffset: 90 });
                         vm.markers[id].bindPopup(popup).openPopup();
-                        vm.markers[id].addTo(map);
+                        vm.markers[id].addTo(teamsLayer);
                     },
                     changed: function (id, team) {
                         if(team.position){
@@ -222,8 +223,24 @@ class GMap {
             }
         }
 
+        let historyLayer = L.layerGroup();
         vm.teamList = {
             _show : false,
+            show : function(){
+                vm.teamList._show = true
+                historyLayer.clearLayers();
+                if(!map.hasLayer(teamsLayer))
+                    map.addLayer(teamsLayer);
+                    
+            },
+            showHistory : function(team){
+                team.history.forEach(function(cord){
+                    historyLayer.addLayer(new L.circleMarker(new L.LatLng(cord.latitude,cord.longitude),{radius : 2}));
+                })
+                historyLayer.addTo(map)
+                map.removeLayer(teamsLayer);
+                vm.teamList._show = false;
+            },
             delete : function(team){
                 let r = window.confirm('confirm !');
                 if(r){
