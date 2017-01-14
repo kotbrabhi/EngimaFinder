@@ -1,7 +1,7 @@
-<button type="button" class="btn btn-xs btn-danger"  ng-click="gMap.logOut()">Log Out</button>
-<button type="button" class="btn btn-xs btn-default" ng-click="gMap.singUp._show = true" ng-if="gMap.user.profile.mask=='010'">Add team</button>
-<button type="button" class="btn btn-xs btn-info" ng-click="gMap.teamList._show = true" ng-if="gMap.user.profile.mask=='010'">teams</button>
-<button type="button" class="btn btn-xs btn-warning" ng-click="gMap.missionList._show = true">Missions</button>
+<button type="button" class="btn btn-sm btn-danger"  ng-click="gMap.logOut()">Log Out</button>
+<button type="button" class="btn btn-sm btn-default" ng-click="gMap.singUp._show = true" ng-if="gMap.user.profile.mask=='010'">Add team</button>
+<button type="button" class="btn btn-sm btn-info" ng-click="gMap.teamList._show = true" ng-if="gMap.user.profile.mask=='010'">teams</button>
+<button type="button" class="btn btn-sm btn-warning" ng-click="gMap.missionList._show = true">Missions</button>
 
 
 <div id="addTeamContainer" ng-if="gMap.user.profile.mask=='010'&&gMap.singUp._show">
@@ -79,9 +79,11 @@
                             <div>
                                 {{team.teamName}}
                                 <br>
-                                Total Score : {{team.totalNote}}
+                                Total score : {{team.totalNote}}
                                 <br>
-                                Nobre Mission accomplie : {{team.nbrMissionDone}}
+                                Nobre de mission accomplie : {{team.nbrMissionDone}}
+                                <br>
+                                Distance parcourue : {{team.distance/1000 | number : 3}} Km
                             </div>
                         </div>
                         <div class="panel-body">

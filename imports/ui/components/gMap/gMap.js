@@ -75,8 +75,10 @@ class GMap {
                 let pos = Location.getReactivePosition() || Location.getLastPosition() || { latitude: 34.6813900, longitude: -1.9085800 };
                 vm.currentMarker.setLatLng([pos.latitude, pos.longitude]);
                 vm.currentMarker.update();
-                if(distance(pos.latitude,pos.longitude,lastPos.latitude,lastPos.longitude)>20){
-                     Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos } })
+                let d = distance(pos.latitude,pos.longitude,lastPos.latitude,lastPos.longitude);
+                if(d>10){
+                     Teams.update({ _id: vm.user.profile.markerId }, { $set: { position: pos},$inc : {distance : d}})
+                     map.panTo(new L.LatLng(pos.latitude, pos.longitude));
                      lastPos = pos;
                 }
                 return pos;
@@ -249,7 +251,7 @@ class GMap {
                             commentaire : "",
                         }
              })
-            Teams.insert({ teamName: vm.singUp.teamName, position: pos ,missions : missions}, function (err, id) {
+            Teams.insert({ teamName: vm.singUp.teamName, position: pos ,missions : missions,distance : 0}, function (err, id) {
                 if (err) {
                     vm.singUp.teamNameTaken = true;
                     $timeout(function () {
