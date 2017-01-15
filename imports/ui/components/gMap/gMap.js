@@ -268,7 +268,7 @@ class GMap {
                             commentaire : "",
                         }
              })
-            Teams.insert({ teamName: vm.singUp.teamName, position: pos ,missions : missions,distance : 0}, function (err, id) {
+            Teams.insert({ teamName: vm.singUp.teamName, position: pos ,missions : missions,distance : 0,history : []}, function (err, id) {
                 if (err) {
                     vm.singUp.teamNameTaken = true;
                     $timeout(function () {
